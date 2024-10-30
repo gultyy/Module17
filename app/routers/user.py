@@ -65,8 +65,19 @@ async def delete_user(db: Annotated[Session, Depends(get_db)], user_id: int):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail='User was not found')
     db.execute(delete(User).where(User.id == user_id))
+    db.execute(delete(Task).where(Task.user_id == user_id))
     db.commit()
     return {
         'status_code': status.HTTP_200_OK,
         'transaction': 'User delete is successful!'
     }
+
+@router.get("/user_id/tasks")
+async def tasks_by_user_id(db: Annotated[Session, Depends(get_db)], user_id: int):
+    tasks = db.scalars(select(Task).where(Task.user_id == user_id)).all()
+    if tasks is None:
+        return HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="There are no tasks."
+        )
+    return tasks
